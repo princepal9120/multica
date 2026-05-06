@@ -25,6 +25,7 @@ import { Download, Server } from "lucide-react";
 import { DaemonSettingsTab } from "./components/daemon-settings-tab";
 import { UpdatesSettingsTab } from "./components/updates-settings-tab";
 import { WorkspaceRouteLayout } from "./components/workspace-route-layout";
+import { NotFoundPage, RouteErrorBoundary } from "./components/route-error-boundary";
 
 /**
  * Sets document.title from the deepest matched route's handle.title.
@@ -76,6 +77,7 @@ function PageShell() {
 export const appRoutes: RouteObject[] = [
   {
     element: <PageShell />,
+    errorElement: <RouteErrorBoundary />,
     children: [
       { index: true, element: null },
       {
@@ -159,7 +161,17 @@ export const appRoutes: RouteObject[] = [
             ),
             handle: { title: "Settings" },
           },
+          {
+            path: "*",
+            element: <NotFoundPage />,
+            handle: { title: "Page not found" },
+          },
         ],
+      },
+      {
+        path: "*",
+        element: <NotFoundPage />,
+        handle: { title: "Page not found" },
       },
     ],
   },
