@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { QueryClient } from "@tanstack/react-query";
-import { onIssueLabelsChanged } from "./ws-updaters";
+import { onIssueDeleted, onIssueLabelsChanged } from "./ws-updaters";
+import { useRecentIssuesStore } from "./stores";
 import { issueKeys } from "./queries";
 import { labelKeys } from "../labels/queries";
 import type {
@@ -58,6 +59,7 @@ describe("onIssueLabelsChanged", () => {
 
   beforeEach(() => {
     qc = new QueryClient();
+    useRecentIssuesStore.setState({ items: [] });
   });
 
   it("patches the per-issue label cache when present (LabelPicker source)", () => {
@@ -91,5 +93,26 @@ describe("onIssueLabelsChanged", () => {
 
     const detail = qc.getQueryData<Issue>(issueKeys.detail(WS_ID, ISSUE_ID));
     expect(detail?.labels).toEqual([labelB]);
+  });
+});
+
+describe("onIssueDeleted", () => {
+  let qc: QueryClient;
+
+  beforeEach(() => {
+    qc = new QueryClient();
+    useRecentIssuesStore.setState({ items: [] });
+  });
+
+  it("prunes deleted issues from recent history", () => {
+    const { recordVisit } = useRecentIssuesStore.getState();
+    recordVisit(ISSUE_ID);
+    recordVisit("other-issue");
+
+    onIssueDeleted(qc, WS_ID, ISSUE_ID);
+
+    expect(useRecentIssuesStore.getState().items.map((i) => i.id)).toEqual([
+      "other-issue",
+    ]);
   });
 });

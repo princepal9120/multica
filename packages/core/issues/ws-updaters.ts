@@ -1,6 +1,7 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { issueKeys } from "./queries";
 import { labelKeys } from "../labels/queries";
+import { useRecentIssuesStore } from "./stores";
 import {
   addIssueToBuckets,
   findIssueLocation,
@@ -115,6 +116,7 @@ export function onIssueDeleted(
     old ? removeIssueFromBuckets(old, issueId) : old,
   );
   qc.invalidateQueries({ queryKey: issueKeys.myAll(wsId) });
+  useRecentIssuesStore.getState().removeItem(issueId);
   qc.removeQueries({ queryKey: issueKeys.detail(wsId, issueId) });
   qc.removeQueries({ queryKey: issueKeys.timeline(issueId) });
   qc.removeQueries({ queryKey: issueKeys.reactions(issueId) });

@@ -214,6 +214,7 @@ export function useDeleteIssue() {
       qc.setQueryData<ListIssuesCache>(issueKeys.list(wsId), (old) =>
         old ? removeIssueFromBuckets(old, id) : old,
       );
+      useRecentIssuesStore.getState().removeItem(id);
       qc.removeQueries({ queryKey: issueKeys.detail(wsId, id) });
       return { prevList, parentIssueId: deleted?.parent_issue_id };
     },
@@ -282,6 +283,8 @@ export function useBatchDeleteIssues() {
         for (const id of ids) next = removeIssueFromBuckets(next, id);
         return next;
       });
+      const recentStore = useRecentIssuesStore.getState();
+      for (const id of ids) recentStore.removeItem(id);
       return { prevList, parentIssueIds };
     },
     onError: (_err, _ids, ctx) => {

@@ -27,7 +27,7 @@ import { Command as CommandPrimitive } from "cmdk";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type { SearchIssueResult, SearchProjectResult } from "@multica/core/types";
-import { api } from "@multica/core/api";
+import { ApiError, api } from "@multica/core/api";
 import { useRecentIssuesStore } from "@multica/core/issues/stores";
 import { issueDetailOptions } from "@multica/core/issues/queries";
 import { useWorkspaceId } from "@multica/core";
@@ -153,6 +153,15 @@ export function SearchCommand() {
   const recentDetailQueries = useQueries({
     queries: recentItems.map((item) => issueDetailOptions(wsId, item.id)),
   });
+  useEffect(() => {
+    recentDetailQueries.forEach((q, index) => {
+      if (q.error instanceof ApiError && q.error.status === 404) {
+        const stale = recentItems[index];
+        if (stale) useRecentIssuesStore.getState().removeItem(stale.id);
+      }
+    });
+  }, [recentDetailQueries, recentItems]);
+
   const recentIssues = useMemo(
     () =>
       recentDetailQueries.flatMap((q) => (q.data ? [q.data] : [])),
