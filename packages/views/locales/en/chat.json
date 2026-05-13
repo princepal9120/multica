@@ -88,7 +88,9 @@
     "card_tooltip_issue": "Multica knows you're viewing {{label}}",
     "card_tooltip_project": "Multica knows you're viewing project \"{{label}}\"",
     "aria_stop": "Stop sharing current page",
-    "aria_start": "Share current page with Multica"
+    "aria_start": "Share current page with Multica",
+    "aria_clear": "Clear shared context",
+    "clear_tooltip": "Clear shared context"
   },
   "no_agent_banner": "You need an agent to start chatting.",
   "offline_banner": {

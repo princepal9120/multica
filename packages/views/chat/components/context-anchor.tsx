@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Focus } from "lucide-react";
+import { Focus, X } from "lucide-react";
 import type { ContextAnchor } from "@multica/core/chat";
 import { useChatStore } from "@multica/core/chat";
 import { useWorkspaceId } from "@multica/core/hooks";
@@ -174,6 +174,7 @@ export function ContextAnchorCard() {
   const paths = useWorkspacePaths();
   const { candidate } = useRouteAnchorCandidate(wsId);
   const focusMode = useChatStore((s) => s.focusMode);
+  const setFocusMode = useChatStore((s) => s.setFocusMode);
 
   if (!focusMode || !candidate) return null;
 
@@ -197,7 +198,7 @@ export function ContextAnchorCard() {
   // alive (text-cursor → pointer, hover background) and behave consistently
   // with @mentions — clicking jumps to the entity.
   return (
-    <div className="mx-2 mt-2 flex items-center">
+    <div className="mx-2 mt-2 flex items-center gap-1.5">
       <Tooltip>
         <TooltipTrigger
           render={
@@ -219,6 +220,22 @@ export function ContextAnchorCard() {
           }
         />
         <TooltipContent side="top">{tooltipText}</TooltipContent>
+      </Tooltip>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="h-6 w-6 rounded-full text-muted-foreground"
+              onClick={() => setFocusMode(false)}
+              aria-label={t(($) => $.context_anchor.aria_clear)}
+            />
+          }
+        >
+          <X className="size-3" />
+        </TooltipTrigger>
+        <TooltipContent side="top">{t(($) => $.context_anchor.clear_tooltip)}</TooltipContent>
       </Tooltip>
     </div>
   );

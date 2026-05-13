@@ -8,13 +8,15 @@ import enChat from "../../locales/en/chat.json";
 const TEST_RESOURCES = { en: { common: enCommon, chat: enChat } };
 
 // Track drop-zone callbacks so the test can simulate a real drop.
-const dropHandlers = vi.hoisted(() => ({
+const editorCalls = vi.hoisted(() => ({
   onDrop: null as null | ((files: File[]) => void),
+  focus: vi.fn(),
+  blur: vi.fn(),
 }));
 
 vi.mock("../../editor", () => ({
   useFileDropZone: ({ onDrop }: { onDrop: (files: File[]) => void }) => {
-    dropHandlers.onDrop = onDrop;
+    editorCalls.onDrop = onDrop;
     return { isDragOver: false, dropZoneProps: { "data-testid": "drop-zone" } };
   },
   FileDropOverlay: () => null,
@@ -39,8 +41,8 @@ vi.mock("../../editor", () => ({
       clearContent: () => {
         valueRef.current = "";
       },
-      blur: () => {},
-      focus: () => {},
+      blur: editorCalls.blur,
+      focus: editorCalls.focus,
       uploadFile: async (file: File) => {
         uploadingRef.current += 1;
         try {
@@ -111,9 +113,9 @@ function renderInput(props: Partial<React.ComponentProps<typeof ChatInput>> = {}
 describe("ChatInput attachment wiring", () => {
   it("routes dropped files through the editor's upload handler", async () => {
     const { onUploadFile } = renderInput();
-    expect(dropHandlers.onDrop).not.toBeNull();
+    expect(editorCalls.onDrop).not.toBeNull();
     const file = new File(["x"], "drop.png", { type: "image/png" });
-    dropHandlers.onDrop?.([file]);
+    editorCalls.onDrop?.([file]);
     // Microtask: the mock editor awaits onUploadFile before mutating its value.
     await Promise.resolve();
     await Promise.resolve();
@@ -133,7 +135,7 @@ describe("ChatInput attachment wiring", () => {
     // mock editor appends the markdown link into its value and calls
     // onUpdate so the input flips out of the empty state.
     const file = new File(["x"], "drop.png", { type: "image/png" });
-    dropHandlers.onDrop?.([file]);
+    editorCalls.onDrop?.([file]);
 
     // Wait for the submit button to become enabled (onUpdate has fired and
     // React has re-rendered). SubmitButton has no aria-label, so we pick
@@ -166,7 +168,7 @@ describe("ChatInput attachment wiring", () => {
     fireEvent.change(screen.getByTestId("editor"), { target: { value: "preview text" } });
 
     const file = new File(["x"], "slow.png", { type: "image/png" });
-    dropHandlers.onDrop?.([file]);
+    editorCalls.onDrop?.([file]);
 
     // While the upload is pending the SubmitButton must be disabled.
     // Bypassing this would send the message with the attachment id
@@ -193,6 +195,22 @@ describe("ChatInput attachment wiring", () => {
     expect(onSend).toHaveBeenCalledTimes(1);
     const [, ids] = onSend.mock.calls[0]!;
     expect(ids).toEqual(["att-slow"]);
+  });
+
+  it("keeps the editor focused after sending", async () => {
+    editorCalls.focus.mockClear();
+    editorCalls.blur.mockClear();
+    const onSend = vi.fn();
+    renderInput({ onSend });
+
+    fireEvent.change(screen.getByTestId("editor"), { target: { value: "next step" } });
+
+    const buttons = screen.getAllByRole("button");
+    fireEvent.click(buttons[buttons.length - 1]!);
+
+    expect(onSend).toHaveBeenCalledTimes(1);
+    expect(editorCalls.focus).toHaveBeenCalledTimes(1);
+    expect(editorCalls.blur).not.toHaveBeenCalled();
   });
 
   it("does not render the file upload button when onUploadFile is omitted", () => {
