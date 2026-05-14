@@ -60,12 +60,17 @@ const {
   mockClipboardWrite: vi.fn(() => Promise.resolve()),
 }));
 
-vi.mock("@multica/core/api", () => ({
-  api: {
-    searchIssues: mockSearchIssues,
-    searchProjects: mockSearchProjects,
-  },
-}));
+vi.mock("@multica/core/api", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@multica/core/api")>();
+  return {
+    ...actual,
+    api: {
+      ...actual.api,
+      searchIssues: mockSearchIssues,
+      searchProjects: mockSearchProjects,
+    },
+  };
+});
 
 vi.mock("@multica/core/issues/stores", () => ({
   useRecentIssuesStore: (selector?: (state: { items: typeof mockRecentItems.current }) => unknown) => {
